@@ -505,6 +505,14 @@ def run_camera_analysis(camera_placeholder, metrics_placeholder, pose_detector, 
         st.markdown("**Observed frame counts (recent history):**")
         st.write(f"Low: {observed.get('low',0)}, Medium: {observed.get('medium',0)}, High: {observed.get('high',0)}, Very High: {observed.get('very_high',0)}")
         st.write(f"Max observed REBA: {summary.get('max_observed_reba', 0)}")
+        
+        # Save incidents to CSV for incident logs view
+        if summary.get('total_incidents_logged', 0) > 0:
+            try:
+                csv_file = alert_system.save_incidents_to_csv()
+                st.success(f"✅ Incidents saved to {csv_file}")
+            except Exception as e:
+                st.warning(f"⚠️ Could not save incidents: {str(e)}")
 
     st.session_state.stop_camera = False
 

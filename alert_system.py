@@ -22,16 +22,34 @@ def create_alert_overlay(image, alert_info, reba_score):
     h, w = image.shape[:2]
     overlay = image.copy()
     
-    # Draw red border for alert
-    cv2.rectangle(overlay, (0, 0), (w, h), (0, 0, 255), 15)
+    # Draw VERY visible red border for alert (thick and prominent)
+    cv2.rectangle(overlay, (0, 0), (w-1, h-1), (0, 0, 255), 40)
     
-    # Add alert text
-    alert_text = "⚠️ HIGH RISK ALERT!"
-    cv2.putText(overlay, alert_text, (50, 100), cv2.FONT_HERSHEY_SIMPLEX, 
-                1.5, (0, 0, 255), 3)
+    # Add large flashing alert text
+    alert_text = "🔴 HIGH RISK ALERT!"
+    font_scale = 2.5
+    thickness = 5
     
-    # Blend
-    result = cv2.addWeighted(image, 0.7, overlay, 0.3, 0)
+    # Text with background for visibility
+    text_size = cv2.getTextSize(alert_text, cv2.FONT_HERSHEY_SIMPLEX, font_scale, thickness)[0]
+    text_x = (w - text_size[0]) // 2
+    text_y = 120
+    
+    # Dark background box for text
+    cv2.rectangle(overlay, (text_x - 10, text_y - text_size[1] - 10), 
+                  (text_x + text_size[0] + 10, text_y + 10), (0, 0, 0), -1)
+    
+    # Red text
+    cv2.putText(overlay, alert_text, (text_x, text_y), cv2.FONT_HERSHEY_SIMPLEX, 
+                font_scale, (0, 0, 255), thickness)
+    
+    # Add REBA score display
+    reba_text = f"REBA: {reba_score}"
+    cv2.putText(overlay, reba_text, (text_x, text_y + 80), cv2.FONT_HERSHEY_SIMPLEX,
+                2.0, (0, 0, 255), 4)
+    
+    # Strong blend for more visibility
+    result = cv2.addWeighted(image, 0.3, overlay, 0.7, 0)
     
     return result
 
