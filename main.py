@@ -507,12 +507,31 @@ def run_camera_analysis(camera_placeholder, metrics_placeholder, pose_detector, 
         st.write(f"Max observed REBA: {summary.get('max_observed_reba', 0)}")
         
         # Save incidents to CSV for incident logs view
-        if summary.get('total_incidents_logged', 0) > 0:
+        if summary.get('total_incidents_logged', 0) > 0 or (alert_system and len(alert_system.incidents) > 0):
             try:
                 csv_file = alert_system.save_incidents_to_csv()
                 st.success(f"✅ Incidents saved to {csv_file}")
+                
+                # Also save to session state for immediate display in View Incident Logs
+                if 'session_incidents' not in st.session_state:
+                    st.session_state.session_incidents = []
+                
+                # Add new incidents from this session
+                for inc in alert_system.incidents:
+                    st.session_state.session_incidents.append({
+                        'incident_id': inc['incident_id'],
+                        'date': inc['start_time'].strftime('%Y-%m-%d'),
+                        'start_time': inc['start_time'].strftime('%H:%M:%S'),
+                        'end_time': inc['end_time'].strftime('%H:%M:%S'),
+                        'duration_seconds': round(inc['duration'], 2),
+                        'peak_reba_score': inc['peak_reba'],
+                        'risk_level': inc['risk_level'],
+                        'trunk_angle': round(inc['trunk_angle'], 2),
+                        'neck_angle': round(inc['neck_angle'], 2)
+                    })
+                
             except Exception as e:
-                st.warning(f"⚠️ Could not save incidents: {str(e)}")
+                st.error(f"❌ Error saving incidents: {str(e)}")
 
     st.session_state.stop_camera = False
 
@@ -920,14 +939,41 @@ def main():
         All high-risk incidents are automatically logged during real-time monitoring.
         """)
         
+        # Show current session incidents first
+        if 'session_incidents' in st.session_state and len(st.session_state.session_incidents) > 0:
+            st.subheader("📊 Current Session Incidents")
+            
+            session_df = pd.DataFrame(st.session_state.session_incidents)
+            
+            col1, col2, col3, col4 = st.columns(4)
+            
+            with col1:
+                st.metric("Total Incidents", len(session_df))
+            
+            with col2:
+                total_duration = session_df['duration_seconds'].sum()
+                st.metric("Total Exposure Time", f"{total_duration:.1f}s")
+            
+            with col3:
+                avg_reba = session_df['peak_reba_score'].mean()
+                st.metric("Avg REBA Score", f"{avg_reba:.1f}")
+            
+            with col4:
+                max_reba = session_df['peak_reba_score'].max()
+                st.metric("Max REBA Score", int(max_reba))
+            
+            st.dataframe(session_df, use_container_width=True)
+            
+            st.divider()
+        
         # Check for log files
         log_files = []
         if os.path.exists('logs'):
             log_files = [f for f in os.listdir('logs') if f.startswith('incidents_') and f.endswith('.csv')]
         
-        if not log_files:
+        if not log_files and ('session_incidents' not in st.session_state or len(st.session_state.session_incidents) == 0):
             st.info("📝 No incident logs found yet. Start a camera session to begin logging.")
-        else:
+        elif log_files:
             # Date selector
             dates = [f.replace('incidents_', '').replace('.csv', '') for f in log_files]
             selected_date = st.selectbox("Select Date", sorted(dates, reverse=True))
