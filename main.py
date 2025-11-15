@@ -507,6 +507,12 @@ def run_camera_analysis(camera_placeholder, metrics_placeholder, pose_detector, 
         st.write(f"Max observed REBA: {summary.get('max_observed_reba', 0)}")
         
         # Save incidents to CSV for incident logs view
+        st.write(f"🔍 DEBUG: total_incidents_logged = {summary.get('total_incidents_logged', 0)}")
+        st.write(f"🔍 DEBUG: alert_system exists = {alert_system is not None}")
+        if alert_system:
+            st.write(f"🔍 DEBUG: alert_system.incidents length = {len(alert_system.incidents)}")
+            st.write(f"🔍 DEBUG: alert_system.incidents content = {alert_system.incidents}")
+        
         if summary.get('total_incidents_logged', 0) > 0 or (alert_system and len(alert_system.incidents) > 0):
             try:
                 csv_file = alert_system.save_incidents_to_csv()
@@ -530,8 +536,13 @@ def run_camera_analysis(camera_placeholder, metrics_placeholder, pose_detector, 
                         'neck_angle': round(inc['neck_angle'], 2)
                     })
                 
+                st.write(f"✅ DEBUG: Saved {len(alert_system.incidents)} incidents to session_state")
+                st.write(f"✅ DEBUG: session_incidents now has {len(st.session_state.session_incidents)} total incidents")
+                
             except Exception as e:
                 st.error(f"❌ Error saving incidents: {str(e)}")
+                import traceback
+                st.error(traceback.format_exc())
 
     st.session_state.stop_camera = False
 
