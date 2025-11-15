@@ -14,29 +14,6 @@ def resize_image(image, max_width=800):
         image = cv2.resize(image, (new_width, new_height))
     return image
 
-
-def preprocess_image(image, max_width=1024, equalize=True):
-    """Preprocess uploaded images for more reliable pose detection.
-
-    Steps:
-    - Resize to max_width while preserving aspect ratio
-    - Optionally apply histogram equalization on Y channel to improve contrast
-    """
-    # Resize
-    img = resize_image(image, max_width=max_width)
-
-    if equalize:
-        try:
-            # Convert BGR to YUV, equalize luminance channel
-            yuv = cv2.cvtColor(img, cv2.COLOR_BGR2YUV)
-            yuv[:, :, 0] = cv2.equalizeHist(yuv[:, :, 0])
-            img = cv2.cvtColor(yuv, cv2.COLOR_YUV2BGR)
-        except Exception:
-            # If conversion fails, return resized image
-            pass
-
-    return img
-
 def add_text_overlay(image, text, position, color=(255, 255, 255), font_scale=0.8):
     """Add text overlay to image"""
     font = cv2.FONT_HERSHEY_SIMPLEX
