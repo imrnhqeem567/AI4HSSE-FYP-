@@ -1,12 +1,19 @@
 """Main Streamlit application for AI4HSSE system"""
 
 import streamlit as st
-import cv2
 import numpy as np
 from PIL import Image
 import io
 import pandas as pd
 import os
+
+try:
+    import cv2
+except ImportError:
+    import subprocess
+    import sys
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "opencv-python-headless"])
+    import cv2
 
 from poseDetection import PoseDetector
 from angleCalculation import extract_all_angles
