@@ -1,9 +1,6 @@
 streamlit
 opencv-python-headless
 mediapipe
-numpy<2.0.0
+numpy<2.0
+Pillow
 pandas
-matplotlib
-seaborn
-pillow
-scikit-learn
